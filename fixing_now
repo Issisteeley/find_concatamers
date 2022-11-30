@@ -70,7 +70,12 @@ from matplotlib.ticker import PercentFormatter
 
 sequencelengths = [len(seq_dict[x]) for x in seq_dict]
 
-len([x for x in sequencelengths if x > 500])
+print(len([x for x in sequencelengths if x > 500]))
+fig, ax = plt.subplots(figsize =(10, 7))
+ax.hist(sequencelengths, bins = [0, 50, 100,125,150,175,200,225,250, 300, 350, 400, 500, 600])
+ 
+# Show plot
+plt.show()
 
 # create an indexed file for SRA searching
 
@@ -155,14 +160,19 @@ for seq in seq_dict:
     matches_with_qual_for_Primer_F[seq]= smithwatermanDNA(Primer_F, seq_dict[seq].seq, subjectquals=seq_dict[seq].letter_annotations['phred_quality'])
     
     matches_with_qual_for_Concatamer[seq]= smithwatermanDNA(Concatamer_seq, seq_dict[seq].seq, subjectquals=seq_dict[seq].letter_annotations['phred_quality'])
-for a in sorted([x for x in matches if matches[x][2]>500 and len(seq_dict[x])> 200], key=lambda t: matches[t][2], reverse=True)[:10]:
+for a in sorted([x for x in matches if matches[x][2]>700 and len(seq_dict[x])> 200], key=lambda t: matches[t][2], reverse=True)[:10]:
     print('These are the alignments for the full linker sequence:')
     print(F'{a} Score: {matches[a][2]} Subject length: {len(seq_dict[a])}bp',Linker2_full[:matches[a][0]+1],str(seq_dict[a].seq)[matches[a][1]-matches[a][0]:matches[a][1]+1], sep='\n')           
                    
-for b in sorted([x for x in matches_for_Primer_F if matches_for_Primer_F[x][2]>500 and len(seq_dict[x])> 200], key=lambda t: matches_for_Primer_F[t][2], reverse=False)[:10]:
+for b in sorted([x for x in matches_for_Primer_F if matches_for_Primer_F[x][2]>700 and len(seq_dict[x])> 200], key=lambda t: matches_for_Primer_F[t][2], reverse=False)[:10]:
     print('These are the alignment sequences for the forward Primer:')
     print(F'{b} Score: {matches_for_Primer_F[b][2]} Subject length: {len(seq_dict[b])}bp',Primer_F[:matches_for_Primer_F[b][0]+1],str(seq_dict[b].seq)[matches_for_Primer_F[b][1]-matches_for_Primer_F[b][0]:matches_for_Primer_F[b][1]+1], sep='\n')           
 
-for c in sorted([x for x in matches_concatamer if matches_concatamer[x][2]>500 and len(seq_dict[x])> 201], key=lambda t: matches_concatamer[t][2], reverse=False)[:10]:
+for c in sorted([x for x in matches_concatamer if matches_concatamer[x][2]>700 and len(seq_dict[x])> 201], key=lambda t: matches_concatamer[t][2], reverse=False)[:10]:
     print('These are the alignment sequences for the concatamer:')
     print(F'{c} Score: {matches_concatamer[c][2]} Subject length: {len(seq_dict[c])}bp',Concatamer_seq[:matches_concatamer[c][0]+1],str(seq_dict[c].seq)[matches_concatamer[c][1]-matches_concatamer[c][0]:matches_concatamer[c][1]+1], sep='\n')           
+
+                    
+
+               
+             
