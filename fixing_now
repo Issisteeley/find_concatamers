@@ -1,0 +1,168 @@
+Linker2_full = 'ATAAGTCGCAGTGAGACGCTCAGTTCAGACATGCGCTGAGTT'
+linker_2 = 'ATAAGTCGCAGTGAG'
+linker_1_complementary= 'CTCACTGCGACTTAT'
+barcode= 'CGCTCAGTTCA'
+barcode_R = 'TGAACTGAGCG'
+Primer_F = 'CTTTGACAACAGGATGGTAAATCA'
+Primer_F_complementary= 'TGATTTACCATCCTGTTGTCAAAG'
+Primer_R = 'TCTCAACCTCCTGAGTGCCCTA'
+Concatamer_seq= 'CTTTGACAACAGGATGGTAAATCATAGGGCACTCAGGAGGTTGAGAATAAGTCGCAGTGAGACGCTCAGTTCAGACATGCGCTGAGTTCTTTGACAACAGGATGGTAAATCATAGGGCACTCAGGAGGTTGAGA'
+linker_num = {} # please use whatever the absolute pathway is on your computer
+filepathway = "C:/Users/issis/OneDrive/Documents/Issi_linkers1/Issi_linker_1.fastq"
+practicefile="C:/Users/issis/OneDrive/Documents/practice concatamer.txt"
+linker_line = [] 
+primer = 0
+Both_linker_F= 0
+Or_linker_F = 0
+barcode_both= 0
+
+from Bio.Seq import Seq
+from Bio import SeqUtils
+
+from Bio import SeqIO
+with open('C:/Users/issis/OneDrive/Documents/Issi_linkers1/Issi_linker_1.fastq') as handle:
+    for record in SeqIO.parse(handle, 'fastq'):
+        sequence = str(record.seq)
+        reverse_sequence = sequence[::-1]
+#end of script                 
+seq_dict = {rec.id : rec for rec in SeqIO.parse(filepathway, "fastq")}
+rev_seq_dict = {reverse_sequence}
+print(rev_seq_dict)
+linker_num = 0 
+primerR = 0
+line_count = 0
+with open(filepathway, 'r') as f:
+#allows database to be read.
+  
+         for line in f: # searches each line in database
+  
+                   
+                   if linker_2 in line or linker_1_complementary in line:
+                       #print(start)
+
+                       linker_num= linker_num +1
+                       
+                   if Primer_F in line or Primer_F_complementary in line:
+                       primer= primer +1
+                       #print(SeqUtils.nt_search(line, Primer_F))                             
+                      
+                   if (Primer_F in line or Primer_F_complementary in line) and (linker_2 in line or linker_1_complementary in line):
+                       Both_linker_F= Both_linker_F + 1
+                       print(line) 
+
+                      
+                   if barcode in line or barcode_R in line:
+                       barcode_both= barcode_both + 1    
+
+                   line_count =line_count+1
+
+print("number of lines:", line_count)
+print("number of reads:", (line_count/4))                                      
+print('number of linkers found in sequenced reads:',linker_num)
+print("number of primers found in sequenced reads:", primer)
+print('number where both a primer and linker is found on the same read:', Both_linker_F)
+print('barcode', barcode_both)
+print('checking reverse dict', rev_seq_dict) 
+import matplotlib.pyplot as plt
+import numpy as np
+from matplotlib import colors
+from matplotlib.ticker import PercentFormatter
+
+sequencelengths = [len(seq_dict[x]) for x in seq_dict]
+
+len([x for x in sequencelengths if x > 500])
+
+# create an indexed file for SRA searching
+
+def smithwatermanDNA(searchseq, subjectseq, subjectquals=None, threshold=0, gap=60):
+    '''
+    Performs a seuence alignment with SMith waterman of search against subjectoptionally using 
+    quality scores as the alignment score
+
+    Parameters
+    ----------
+    searchseq : string (or Biopython Seq object) of the sequence to search for
+        
+    subjectseq : string (or biopython Seq object)
+        Minion sequence in which to find the search sequence
+    subjectquals : array of numbers, optional
+        quality scores for the subject bases. The default is None.
+
+    Returns
+    -------
+    top matching scores over threshold
+
+    '''
+
+    subject = str(subjectseq)
+    search = str(searchseq)
+                   
+
+               
+    scores=[]
+    routes = []
+
+    for y in range(len(search)):
+        scores.append([])
+        routes.append([])
+        for x in range(len(subject)):
+            gap_x=0
+            gap_y=0
+            match=0
+            if subject[x]==search[y]:
+                if subjectquals:
+                    match = subjectquals[x]
+                else:
+                    match = 40
+                if x>0 and y>0:
+                    match = match+scores[y-1][x-1]
+            if x > 0:
+                gap_x = scores[y][x-1]-gap
+            if y >0:
+                gap_y = scores[y-1][x] -gap
+            matchscores = [0, gap_x,gap_y, match]
+            scores[y].append(max(matchscores))
+            routes[y].append(matchscores.index(max(matchscores)))
+    max_y = [max(h) for h in scores ]
+    max_x = [max([v[i] for v in scores]) for i in range(len(subject))]
+    assert max(max_x) == max(max_y)
+    return max_y.index(max(max_y)), max_x.index(max(max_x)), max(max_y)
+matches_for_Primer_F={}                    
+matches={}
+matches_concatamer={}
+
+for seq in seq_dict:
+    matches[seq]= smithwatermanDNA(Linker2_full, seq_dict[seq].seq) 
+
+for seq in seq_dict: 
+    matches_for_Primer_F[seq]= smithwatermanDNA(Primer_F, seq_dict[seq].seq)
+
+for seq in seq_dict:
+    matches_concatamer[seq]= smithwatermanDNA(Concatamer_seq, seq_dict[seq].seq)           
+matches_with_qual={}
+matches_with_qual_for_Primer_F={}
+matches_with_qual_for_Concatamer={}
+count=0
+for seq in seq_dict:
+    count=count+1
+    if count%100==0:
+        point = '.'
+        if count%1000==0:
+            point='|'
+        print(point, end='')
+        
+    matches_with_qual[seq]= smithwatermanDNA(Linker2_full, seq_dict[seq].seq, subjectquals=seq_dict[seq].letter_annotations['phred_quality']) 
+    matches_with_qual_for_Primer_F[seq]= smithwatermanDNA(Primer_F, seq_dict[seq].seq, subjectquals=seq_dict[seq].letter_annotations['phred_quality'])
+    
+    matches_with_qual_for_Concatamer[seq]= smithwatermanDNA(Concatamer_seq, seq_dict[seq].seq, subjectquals=seq_dict[seq].letter_annotations['phred_quality'])
+for a in sorted([x for x in matches if matches[x][2]>500 and len(seq_dict[x])> 200], key=lambda t: matches[t][2], reverse=True)[:10]:
+    print('These are the alignments for the full linker sequence:')
+    print(F'{a} Score: {matches[a][2]} Subject length: {len(seq_dict[a])}bp',Linker2_full[:matches[a][0]+1],str(seq_dict[a].seq)[matches[a][1]-matches[a][0]:matches[a][1]+1], sep='\n')           
+                   
+for b in sorted([x for x in matches_for_Primer_F if matches_for_Primer_F[x][2]>500 and len(seq_dict[x])> 200], key=lambda t: matches_for_Primer_F[t][2], reverse=False)[:10]:
+    print('These are the alignment sequences for the forward Primer:')
+    print(F'{b} Score: {matches_for_Primer_F[b][2]} Subject length: {len(seq_dict[b])}bp',Primer_F[:matches_for_Primer_F[b][0]+1],str(seq_dict[b].seq)[matches_for_Primer_F[b][1]-matches_for_Primer_F[b][0]:matches_for_Primer_F[b][1]+1], sep='\n')           
+
+for c in sorted([x for x in matches_concatamer if matches_concatamer[x][2]>500 and len(seq_dict[x])> 201], key=lambda t: matches_concatamer[t][2], reverse=False)[:10]:
+    print('These are the alignment sequences for the concatamer:')
+    print(F'{c} Score: {matches_concatamer[c][2]} Subject length: {len(seq_dict[c])}bp',Concatamer_seq[:matches_concatamer[c][0]+1],str(seq_dict[c].seq)[matches_concatamer[c][1]-matches_concatamer[c][0]:matches_concatamer[c][1]+1], sep='\n')           
