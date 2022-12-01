@@ -73,8 +73,11 @@ sequencelengths = [len(seq_dict[x]) for x in seq_dict]
 print(len([x for x in sequencelengths if x > 500]))
 fig, ax = plt.subplots(figsize =(10, 7))
 ax.hist(sequencelengths, bins = [0, 50, 100,125,150,175,200,225,250, 300, 350, 400, 500, 600])
- 
-# Show plot
+legend = ['Sequenced reads of the same size'] 
+plt.xlabel("Size of concatamers (bp)")
+plt.ylabel("Number of reads")
+plt.title('Distribution of Sequenced Concatamer Length (bp)')
+plt.legend(legend)
 plt.show()
 
 # create an indexed file for SRA searching
@@ -100,8 +103,10 @@ def smithwatermanDNA(searchseq, subjectseq, subjectquals=None, threshold=0, gap=
     '''
 
     subject = str(subjectseq)
+    Complementary_subject = (str(subjectseq)[::-1])
     search = str(searchseq)
-                   
+    Complementary_search = (str(searchseq)[::-1])
+                     
 
                
     scores=[]
@@ -110,6 +115,7 @@ def smithwatermanDNA(searchseq, subjectseq, subjectquals=None, threshold=0, gap=
     for y in range(len(search)):
         scores.append([])
         routes.append([])
+
         for x in range(len(subject)):
             gap_x=0
             gap_y=0
