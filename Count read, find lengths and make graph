@@ -1,0 +1,52 @@
+ode that counts the number of reads, finds their length and prints a graph of the size distribution
+@author: issis
+"""
+
+
+linker_num = {} # please use whatever the absolute pathway is on your computer
+filepathway = "C:/Users/issis/OneDrive/Documents/Issi_linkers1/Issi_linker_1.fastq"
+practicefile="C:/Users/issis/OneDrive/Documents/practice concatamer.txt"
+linker_line = [] 
+
+
+from Bio.Seq import Seq
+from Bio import SeqUtils
+
+from Bio import SeqIO
+with open('C:/Users/issis/OneDrive/Documents/Issi_linkers1/Issi_linker_1.fastq') as handle:
+    for record in SeqIO.parse(handle, 'fastq'):
+        sequence = str(record.seq)
+        reverse_sequence = sequence[::-1]
+#end of script                 
+seq_dict = {rec.id : rec for rec in SeqIO.parse(filepathway, "fastq")}
+
+
+line_count = 0
+with open(filepathway, 'r') as f:
+#allows database to be read.
+  
+         for line in f: # searches each line in database
+  
+                   
+
+                   line_count =line_count+1
+
+print("number of lines:", line_count)
+print("number of reads:", (line_count/4))                                      
+
+import matplotlib.pyplot as plt
+import numpy as np
+from matplotlib import colors
+from matplotlib.ticker import PercentFormatter
+
+sequencelengths = [len(seq_dict[x]) for x in seq_dict]
+
+print('number of reads that are more than 100bp',len([x for x in sequencelengths if x > 100]))
+fig, ax = plt.subplots(figsize =(10, 7))
+ax.hist(sequencelengths, bins = [0, 50, 100,125,150,175,200,225,250, 300, 350, 400, 500, 600])
+legend = ['Sequenced reads of the same size'] 
+plt.xlabel("Size of concatamers (bp)")
+plt.ylabel("Number of reads")
+plt.title('Distribution of Sequenced Concatamer Length (bp)')
+plt.legend(legend)
+plt.show()
