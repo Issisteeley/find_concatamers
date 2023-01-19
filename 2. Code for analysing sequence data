@@ -1,0 +1,213 @@
+File that finds the best 10 matches of concatemer sequences
+
+@author: issis collab with Dr Martin
+"""
+
+from Bio.Seq import Seq
+from Bio import SeqUtils
+from Bio import SeqIO
+import matplotlib.pyplot as plt
+import numpy as np
+from matplotlib import colors
+from matplotlib.ticker import PercentFormatter
+import matplotlib.pyplot as plt
+import numpy as np
+from matplotlib import colors
+from matplotlib.ticker import PercentFormatter
+
+linker_num = {} 
+# please use whatever the absolute pathway is on your computer
+filepathway = "C:/Users/issis/OneDrive/Documents/Issi_linkers1/Issi_linker_1.fastq"
+linker_line = [] 
+
+
+
+                 
+seq_dict = {rec.id : rec for rec in SeqIO.parse(filepathway, "fastq")}
+
+
+# create an indexed file for SRA searching
+
+def smithwatermanDNA(searchseq, subjectseq, subjectquals=None, threshold=0, gap=60):
+    '''
+    Performs a seuence alignment with SMith waterman of search against subjectoptionally using 
+    quality scores as the alignment score
+
+    Parameters
+    ----------
+    searchseq : string (or Biopython Seq object) of the sequence to search for
+        
+    subjectseq : string (or biopython Seq object)
+        Minion sequence in which to find the search sequence
+    subjectquals : array of numbers, optional
+        quality scores for the subject bases. The default is None.
+
+    Returns
+    -------
+    top matching scores over threshold
+
+    '''
+
+    subject = str(subjectseq)
+    search = str(searchseq)
+                    
+            
+    scores=[]
+    routes = []
+
+    for y in range(len(search)):
+        scores.append([])
+        routes.append([])
+
+        for x in range(len(subject)):
+            gap_x=0
+            gap_y=0
+            match=0
+            if subject[x]==search[y]:
+                if subjectquals:
+                    match = subjectquals[x]
+                else:
+                    match = 40
+                if x>0 and y>0:
+                    match = match+scores[y-1][x-1]
+            if x > 0:
+                gap_x = scores[y][x-1]-gap
+            if y >0:
+                gap_y = scores[y-1][x] -gap
+            matchscores = [0, gap_x,gap_y, match]
+            scores[y].append(max(matchscores))
+            routes[y].append(matchscores.index(max(matchscores)))
+    max_y = [max(h) for h in scores ]
+    max_x = [max([v[i] for v in scores]) for i in range(len(subject))]
+    assert max(max_x) == max(max_y)
+    return max_y.index(max(max_y)), max_x.index(max(max_x)), max(max_y)
+
+
+
+L1 = 'CTTTGACAACAGGATGGTAAATCAATAAGTCGCAGTGAGACGCTCAGTTCAAGACATGCGCTGAGTT'
+L2 = 'ATAAGTCGCAGTGAGACGCTCAGTTCAAGACATGCGCTGAGTTCTTTGACAACAGGATGGTAAATCA'
+L3 = 'TGATTTACCATCCTGTTGTCAAAGATAAGTCGCAGTGAGACGCTCAGTTCAAGACATGCGCTGAGTT'
+L4 = 'TGATTTACCATCCTGTTGTCAAAGAACTCAGCGCATGTCTTGAACTGAGCGTCTCACTGCGACTTAT'
+L5 = 'CTTTGACAACAGGATGGTAAATCAAACTCAGCGCATGTCTTGAACTGAGCGTCTCACTGCGACTTAT'
+L6 = 'AACTCAGCGCATGTCTTGAACTGAGCGTCTCACTGCGACTTATCTTTGACAACAGGATGGTAAATCA'
+L7 = 'AACTCAGCGCATGTCTTGAACTGAGCGTCTCACTGCGACTTATTGATTTACCATCCTGTTGTCAAAG'
+L8 = 'ATAAGTCGCAGTGAGACGCTCAGTTCAAGACATGCGCTGAGTTTGATTTACCATCCTGTTGTCAAAG'
+
+L1_matches = {}
+L2_matches = {}
+L3_matches = {}
+L4_matches = {}
+L5_matches = {}
+L6_matches = {}
+L7_matches = {}
+L8_matches = {}
+
+L1_results = []
+L2_results = []
+L3_results = []
+L4_results = []
+L5_results = []
+L6_results = []
+L7_results = []
+L8_results = []
+
+for seq in seq_dict:
+    L1_matches[seq]= smithwatermanDNA(L1, seq_dict[seq].seq) 
+    L2_matches[seq]= smithwatermanDNA(L2, seq_dict[seq].seq) 
+    L3_matches[seq]= smithwatermanDNA(L3, seq_dict[seq].seq)
+    L4_matches[seq]= smithwatermanDNA(L4, seq_dict[seq].seq)
+    L5_matches[seq]= smithwatermanDNA(L5, seq_dict[seq].seq)
+    L6_matches[seq]= smithwatermanDNA(L6, seq_dict[seq].seq)
+    L7_matches[seq]= smithwatermanDNA(L7, seq_dict[seq].seq)
+    L8_matches[seq]= smithwatermanDNA(L8, seq_dict[seq].seq)
+
+for L1_index in sorted([x for x in L1_matches if L1_matches[x][2]>1200 and len(seq_dict[x])> 201], key=lambda t: L1_matches[t][2], reverse=True)[:10]:
+    L1_line_results = [int(L1_matches[L1_index][2]), len(seq_dict[L1_index]), L1[:L1_matches[L1_index][0]+1],str(seq_dict[L1_index].seq)[L1_matches[L1_index][1]-L1_matches[L1_index][0]:L1_matches[L1_index][1]+1]]
+    L1_results.append(L1_line_results)
+
+for L2_index in sorted([x for x in L2_matches if L2_matches[x][2]>1200 and len(seq_dict[x])> 201], key=lambda t: L2_matches[t][2], reverse=True)[:10]:  
+    L2_line_results = [int(L2_matches[L2_index][2]), len(seq_dict[L2_index]), L2[:L2_matches[L2_index][0]+1],str(seq_dict[L2_index].seq)[L2_matches[L2_index][1]-L2_matches[L2_index][0]:L2_matches[L2_index][1]+1]]
+    L2_results.append(L2_line_results)
+    
+for L3_index in sorted([x for x in L3_matches if L3_matches[x][2]>1200 and len(seq_dict[x])> 201], key=lambda t: L3_matches[t][2], reverse=True)[:10]:  
+    L3_line_results = [int(L3_matches[L3_index][2]), len(seq_dict[L3_index]), L3[:L3_matches[L3_index][0]+1],str(seq_dict[L3_index].seq)[L3_matches[L3_index][1]-L3_matches[L3_index][0]:L3_matches[L3_index][1]+1]]
+    L3_results.append(L3_line_results)
+    
+for L4_index in sorted([x for x in L4_matches if L4_matches[x][2]>1200 and len(seq_dict[x])> 201], key=lambda t: L4_matches[t][2], reverse=True)[:10]:  
+    L4_line_results = [int(L4_matches[L4_index][2]), len(seq_dict[L4_index]), L4[:L4_matches[L4_index][0]+1],str(seq_dict[L4_index].seq)[L4_matches[L4_index][1]-L4_matches[L4_index][0]:L4_matches[L4_index][1]+1]]
+    L4_results.append(L4_line_results)    
+
+for L5_index in sorted([x for x in L5_matches if L5_matches[x][2]>1200 and len(seq_dict[x])> 201], key=lambda t: L5_matches[t][2], reverse=True)[:10]:  
+    L5_line_results = [int(L5_matches[L5_index][2]), len(seq_dict[L5_index]), L5[:L5_matches[L5_index][0]+1],str(seq_dict[L5_index].seq)[L5_matches[L5_index][1]-L5_matches[L5_index][0]:L5_matches[L5_index][1]+1]]
+    L5_results.append(L5_line_results)
+
+for L6_index in sorted([x for x in L6_matches if L6_matches[x][2]>1200 and len(seq_dict[x])> 201], key=lambda t: L6_matches[t][2], reverse=True)[:10]:  
+    L6_line_results = [int(L6_matches[L6_index][2]), len(seq_dict[L6_index]), L6[:L6_matches[L6_index][0]+1],str(seq_dict[L6_index].seq)[L6_matches[L6_index][1]-L6_matches[L6_index][0]:L6_matches[L6_index][1]+1]]
+    L6_results.append(L6_line_results)
+
+for L7_index in sorted([x for x in L7_matches if L7_matches[x][2]>1200 and len(seq_dict[x])> 201], key=lambda t: L7_matches[t][2], reverse=True)[:10]:  
+    L7_line_results = [int(L7_matches[L7_index][2]), len(seq_dict[L7_index]), L7[:L7_matches[L7_index][0]+1],str(seq_dict[L7_index].seq)[L7_matches[L7_index][1]-L7_matches[L7_index][0]:L7_matches[L7_index][1]+1]]
+    L7_results.append(L7_line_results)
+
+for L8_index in sorted([x for x in L8_matches if L8_matches[x][2]>1200 and len(seq_dict[x])> 201], key=lambda t: L8_matches[t][2], reverse=True)[:10]:  
+    L8_line_results = [int(L8_matches[L8_index][2]), len(seq_dict[L8_index]), L8[:L8_matches[L8_index][0]+1],str(seq_dict[L8_index].seq)[L8_matches[L8_index][1]-L8_matches[L8_index][0]:L8_matches[L8_index][1]+1]]
+    L8_results.append(L8_line_results)    
+
+print("Combined results")
+
+concatenated_results = np.vstack([L1_results, L2_results, L3_results, L4_results, L5_results, L6_results, L7_results, L8_results])
+print(concatenated_results.shape)
+ordered_results = sorted(concatenated_results, key=lambda x: int(x[0]), reverse=True)[:10]
+   
+index = 1  
+for o_result in ordered_results:
+    print(index, o_result)
+    index = index+1
+    
+print("--------------------------------------------------------------------------------------------------")    
+read_with_multiple_concatamers = []       
+with open(filepathway, 'r') as f:
+#allows database to be read.
+  
+    for line in f: # searches each line in database
+        counter = 0      
+        for iterator in range(len(L1_results)):
+            #print(L1_results[iterator][3]) 
+            if L1_results[iterator][3] in line:
+                print("Result:", L1_results[iterator][3], "\n line", line)
+                counter= counter + 1
+                
+        for iterator in range(len(L2_results)):
+            #print(L2_results[iterator][3]) 
+            if L2_results[iterator][3] in line:
+                counter= counter + 1
+        for iterator in range(len(L3_results)):
+            #print(L2_results[iterator][3]) 
+            if L3_results[iterator][3] in line:
+                counter= counter + 1
+        for iterator in range(len(L4_results)):
+            #print(L2_results[iterator][3]) 
+            if L4_results[iterator][3] in line:
+                counter= counter + 1
+        for iterator in range(len(L5_results)):
+            #print(L2_results[iterator][3]) 
+            if L5_results[iterator][3] in line:
+                counter= counter + 1
+        for iterator in range(len(L6_results)):
+            #print(L2_results[iterator][3]) 
+            if L6_results[iterator][3] in line:
+                counter= counter + 1
+        for iterator in range(len(L7_results)):
+            #print(L2_results[iterator][3]) 
+            if L7_results[iterator][3] in line:
+                counter= counter + 1
+        for iterator in range(len(L8_results)):
+            #print(L2_results[iterator][3]) 
+            if L8_results[iterator][3] in line:
+                counter= counter + 1
+                                                        
+
+        if counter > 1:
+            read_with_multiple_concatamers.append([counter, line])
+print('number of reads found with multiple concatamers', len(read_with_multiple_concatamers))        
+print(read_with_multiple_concatamers)
